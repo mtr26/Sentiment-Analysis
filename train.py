@@ -73,32 +73,32 @@ def evaluate_accuracy(model, data_loader):
     with th.no_grad():
         for input_ids, attention_mask, label_batch in data_loader:
             batch_size = input_ids.size(0)
-            # initialize hidden state for the current batch
             logits = model(input_ids)
-            # get predicted class from logits (assuming output shape [B, num_classes])
             preds = logits.argmax(dim=1)
             correct += (preds == label_batch).sum().item()
             total += batch_size
     model.train()
     return correct / total
 
-model.train()
-for epoch in tqdm(range(epochs)):
-    epoch_loss = 0.0
-    for input_ids, attention_mask, label_batch in train_loader:
-        batch_size = input_ids.size(0)
-        optimizer.zero_grad()
-        logits = model(input_ids)
-        loss = criterion(logits, label_batch.long())
-        loss.backward()
-        optimizer.step()
-        epoch_loss += loss.item()
-    
-    train_acc = evaluate_accuracy(model, train_loader)
-    print(f"Epoch {epoch+1}/{epochs}, Loss: {epoch_loss / len(train_loader):.12f}, Accuracy: {train_acc*100:.2f}%")
 
 
-th.save(model, "Model")
+def train(num_epochs : int, model_path : str):
+    model.train()
+    for epoch in tqdm(range(num_epochs)):
+        epoch_loss = 0.0
+        for input_ids, attention_mask, label_batch in train_loader:
+            batch_size = input_ids.size(0)
+            optimizer.zero_grad()
+            logits = model(input_ids)
+            loss = criterion(logits, label_batch.long())
+            loss.backward()
+            optimizer.step()
+            epoch_loss += loss.item()
+        
+        train_acc = evaluate_accuracy(model, train_loader)
+        print(f"Epoch {epoch+1}/{epochs}, Loss: {epoch_loss / len(train_loader):.12f}, Accuracy: {train_acc*100:.2f}%")
+    th.save(model, model_path)
+
 
 def predict(sentence):
     model.eval()
@@ -118,12 +118,33 @@ def predict(sentence):
     return predicted_sentiment, probabilities
 
 
-running = True
+import argparse
+import json
 
-while running:
-    input_ = input("-> ")
-    if input_ == "q":
-        running = False
-    else:
-        print(predict(input_))
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--params_file')
+    parser.add_argument('--num_of_epchs')
+    parser.add_argument('--path')
 
+    args = parser.parse_args()
+
+    with open(args.path, 'r+') as f:
+        data = json.load(f)
+    
+    try:
+        batch_size = data["batch_size"]
+        embed_size = data["embed_size"]
+        hidden_size = data["hidden_size"]
+        num_classes = data["num_classes"]
+        num_layers = data["num_layers"]
+        lr = data["learning_rate"]
+    except:
+        raise Exception("Failed to read the json file. Please check the format.")
+    
+    train(args.num_of_epchs, args.path)
+
+
+
+    
+    
