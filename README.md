@@ -17,7 +17,7 @@ A PyTorch-based sentiment analysis system that uses LSTM networks to classify te
 
 ```bash
 # Install dependencies
-pip install torch transformers datasets tqdm flask
+pip3 install --no-cache-dir -r requirements.txt
 
 # Train base model on IMDb
 python train.py
@@ -36,18 +36,36 @@ python Interpret.py
 
 Training
 ```bash
-from train import train_model
-
-# Train on IMDb dataset
-model = train_model()
+python3 train.py \
+    --params_file <path_to_params.json> \
+    --num_of_epchs <number_of_epochs> \
+    --path <output_model_path> \
+    --pretrained <pretrained_model_path> \
+    --dataset <dataset_name>
 ```
 
-Inference
+Example
 ```bash
-from Tests import predict
+# Train from scratch on IMDB dataset
+python3 train.py --params_file params.json --num_of_epchs 100 --path model.pth --pretrained None --dataset imdb
 
-sentiment, probabilities = predict("Your text here")
+# Fine-tune pretrained model on SST2 dataset
+python3 train.py --params_file params.json --num_of_epchs 50 --path model_finetuned.pth --pretrained model.pth --dataset sst2
 ```
+
+Testing
+```bash
+# Run evaluation tests
+python3 Tests.py
+```
+
+Interactive Predictions
+```bash
+# Start interactive prediction interface
+python3 Interpret.py --path model_path
+```
+
+
 
 ## Model Architecture
 
